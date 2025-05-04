@@ -1,5 +1,8 @@
 package com.example.demo.controllers;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -19,7 +22,6 @@ import com.example.demo.service.AdministradorService;
 import com.google.gson.Gson;
 
 @RestController
-@RequestMapping("/api/v1/admins")
 public class AdministradorController {
 
 	@Autowired
@@ -29,7 +31,7 @@ public class AdministradorController {
 	private AdministradorRepository administradorRepository;
 
 	// 8. Criar Administrador POST
-	@PostMapping(consumes = {"application/json", "text/plain"})
+	@PostMapping(value = "/api/v1/admins", consumes = {"application/json", "text/plain"})
 	public ResponseEntity<Object> criarAdministrador(@RequestBody String body) {
 		Administrador novoAdmin;
 		System.out.println(body);
@@ -45,12 +47,13 @@ public class AdministradorController {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Username já em uso"));
 		}
 
+		novoAdmin.setPasswordHash(hashPassword(novoAdmin.getPasswordHash()));
 		Administrador salvo = administradorService.save(novoAdmin);
 		return ResponseEntity.status(HttpStatus.CREATED).body(salvo);
 	}
 
 	// 9. Login de Administrador POST
-	@PostMapping(value = "/login", consumes = {"application/json", "text/plain"})
+	@PostMapping(value = "/api/v1/login/admin", consumes = {"application/json", "text/plain"})
 	public ResponseEntity<Object> loginAdministrador(@RequestBody String body) {
 		Map<String, String> logarComoAdm;
 		try {
@@ -59,25 +62,27 @@ public class AdministradorController {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "JSON inválido"));
 		}
 		String username = logarComoAdm.get("username");
-		String passwordHash = logarComoAdm.get("passwordHash");
+		String password = logarComoAdm.get("password");
 
 		Optional<Administrador> adminOptional = administradorRepository.findByUsername(username);
 
 		if (adminOptional.isPresent()) {
 			Administrador admin = adminOptional.get();
 
-			if (admin.getPasswordHash().equals(passwordHash)) {
+			if (admin.getPasswordHash().equals(hashPassword(password))) {
 				return ResponseEntity.ok(Map.of("message", "Login realizado com sucesso ", "adminId", admin.getId()));
 			} else {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Senha incorreta"));
 			}
 		} else {
+			HttpHeaders headers = new HttpHeaders();
+			headers.set("Content-Type", "application/json");
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Admin nao encontrado"));
 		}
 	}
 
 	// 10. Obter Administrador por ID GET
-	@GetMapping("/id")
+	@GetMapping("/api/v1/admins/id")
 	public ResponseEntity<String> getAdministradorById(@RequestParam int id) {
 
 		Optional<Administrador> encontroAdmById = administradorRepository.findById(id);
@@ -99,7 +104,7 @@ public class AdministradorController {
 	}
 
 	// 11. Obter Administrador por Nome de Usuário GET
-	@GetMapping("/nome")
+	@GetMapping("/api/v1/admins/nome")
 	public ResponseEntity<String> getAdministradorByUsername(@RequestParam String username) {
 
 		Optional<Administrador> encontroAdmByUsername = administradorRepository.findByUsername(username);
@@ -117,6 +122,20 @@ public class AdministradorController {
 			HttpHeaders headers = new HttpHeaders();
 			headers.set("Content-Type", "application/json");
 			return new ResponseEntity<>(errorJson, headers, HttpStatus.NOT_FOUND);
+		}
+	}
+
+	private String hashPassword(String password) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+			StringBuilder hexString = new StringBuilder();
+			for (byte b : hash) {
+				hexString.append(String.format("%02x", b));
+			}
+			return hexString.toString();
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException("Erro ao hashear a senha", e);
 		}
 	}
 }

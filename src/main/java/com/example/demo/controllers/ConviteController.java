@@ -23,7 +23,7 @@ import com.example.demo.repository.ConviteRepository;
 import com.example.demo.service.ConviteService;
 
 @RestController
-@RequestMapping("/api/invites")
+@RequestMapping("/api/v1/invites")
 public class ConviteController {
 	
 	@Autowired

@@ -19,7 +19,7 @@ import com.example.demo.service.AdministradorService;
 import com.google.gson.Gson;
 
 @RestController
-@RequestMapping("/api/admins")
+@RequestMapping("/api/v1/admins")
 public class AdministradorController {
 
 	@Autowired

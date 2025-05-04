@@ -15,8 +15,8 @@ public class AdministradorService {
 		return repository.getReferenceById(id);
 	}
 	
-	public Optional<Administrador> getAdministradorByUsuario(String nomeUsuario){
-		return repository.findByNomeUsuario(nomeUsuario);
+	public Optional<Administrador> getAdministradorByUsername(String username){
+		return repository.findByUsername(username);
 	}
 	
 	public Administrador save(Administrador adm) {

@@ -29,10 +29,17 @@ public class AdministradorController {
 	private AdministradorRepository administradorRepository;
 
 	// 8. Criar Administrador POST
-	@PostMapping
-	public ResponseEntity<Object> criarAdministrador(@RequestBody Administrador novoAdmin) {
+	@PostMapping(consumes = {"application/json", "text/plain"})
+	public ResponseEntity<Object> criarAdministrador(@RequestBody String body) {
+		Administrador novoAdmin;
+		System.out.println(body);
+		try {
+			novoAdmin = new Gson().fromJson(body, Administrador.class);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "JSON inválido"));
+		}
 		System.out.println("PASSOU!");
-		Optional<Administrador> existente = administradorService.getAdministradorByUsuario(novoAdmin.getNomeUsuario());
+		Optional<Administrador> existente = administradorService.getAdministradorByUsername(novoAdmin.getUsername());
 
 		if (existente.isPresent()) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Username já em uso"));
@@ -43,17 +50,23 @@ public class AdministradorController {
 	}
 
 	// 9. Login de Administrador POST
-	@PostMapping("/login")
-	public ResponseEntity<Object> loginAdministrador(@RequestBody Map<String, String> logarComoAdm) {
-		String usuario = logarComoAdm.get("usuario");
-		String senha = logarComoAdm.get("senha");
+	@PostMapping(value = "/login", consumes = {"application/json", "text/plain"})
+	public ResponseEntity<Object> loginAdministrador(@RequestBody String body) {
+		Map<String, String> logarComoAdm;
+		try {
+			logarComoAdm = new Gson().fromJson(body, Map.class);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "JSON inválido"));
+		}
+		String username = logarComoAdm.get("username");
+		String passwordHash = logarComoAdm.get("passwordHash");
 
-		Optional<Administrador> adminOptional = administradorRepository.findByNomeUsuario(usuario);
+		Optional<Administrador> adminOptional = administradorRepository.findByUsername(username);
 
 		if (adminOptional.isPresent()) {
 			Administrador admin = adminOptional.get();
 
-			if (admin.getSenha().equals(senha)) {
+			if (admin.getPasswordHash().equals(passwordHash)) {
 				return ResponseEntity.ok(Map.of("message", "Login realizado com sucesso ", "adminId", admin.getId()));
 			} else {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Senha incorreta"));
@@ -87,12 +100,12 @@ public class AdministradorController {
 
 	// 11. Obter Administrador por Nome de Usuário GET
 	@GetMapping("/nome")
-	public ResponseEntity<String> getAdministradorByNome_usuario(@RequestParam String nomeUsuario) {
+	public ResponseEntity<String> getAdministradorByUsername(@RequestParam String username) {
 
-		Optional<Administrador> encontroAdmByNome_usuario = administradorRepository.findByNomeUsuario(nomeUsuario);
+		Optional<Administrador> encontroAdmByUsername = administradorRepository.findByUsername(username);
 
-		if (encontroAdmByNome_usuario.isPresent()) {
-			Administrador admin = encontroAdmByNome_usuario.get();
+		if (encontroAdmByUsername.isPresent()) {
+			Administrador admin = encontroAdmByUsername.get();
 			Gson gson = new Gson();
 			String json = gson.toJson(admin);
 			HttpHeaders headers = new HttpHeaders();

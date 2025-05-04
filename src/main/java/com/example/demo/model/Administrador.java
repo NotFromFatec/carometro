@@ -26,17 +26,17 @@ public class Administrador {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
 	
-	@Column(name = "nome", nullable = false)
-	private String nome;
+	@Column(name = "name", nullable = false)
+	private String name;
 	
-	@Column(name = "nomeUsuario", nullable = false)
-	private String nomeUsuario;
+	@Column(name = "username", nullable = false)
+	private String username;
 	
-	@Column(name = "senha", nullable = false)
-	private String senha;
+	@Column(name = "passwordHash", nullable = false)
+	private String passwordHash;
 	
-	@Column(name = "cargo", nullable = false)
-	private String cargo;
+	@Column(name = "role", nullable = false)
+	private String role;
 	
 
 }

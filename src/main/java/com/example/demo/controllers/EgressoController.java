@@ -154,7 +154,11 @@ public class EgressoController {
         // Senão, lista todos
         List<Egresso> egressos = egressoService.listar();
         if (!egressos.isEmpty()) {
-            return ResponseEntity.ok(egressos);
+            Gson gson = new Gson();
+                String json = gson.toJson(egressos);
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("Content-Type", "application/json");
+                return new ResponseEntity<>(json, headers, HttpStatus.OK);
         } else {
             Map<String, String> error = new HashMap<>();
             error.put("message", "Nenhum egresso encontrado");

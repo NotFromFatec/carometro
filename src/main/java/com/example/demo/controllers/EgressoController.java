@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
@@ -126,8 +127,8 @@ public class EgressoController {
     }
 
     // 5. Obter Egresso por Nome de Usuário GET
-    @GetMapping("/api/v1/egressos/username/{username}")
-    public ResponseEntity<String> getEgressoByUsername(@PathVariable String username) {
+    @GetMapping("/api/v1/egressos")
+    public ResponseEntity<String> getEgressoByUsername(@RequestParam String username) {
 
         Optional<Egresso> encontroEgressoByUsername = Optional
                 .ofNullable(egressoService.findEgressoByUsername(username));

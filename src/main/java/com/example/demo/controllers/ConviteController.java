@@ -73,7 +73,7 @@ public class ConviteController {
 	    return new ResponseEntity<>(listaDeConvites, headers, HttpStatus.OK);
 	}
 
-	// 14. Cancelar Código de Convite PUT?o q é put?
+	// 14. Cancelar Código de Convite PUT
 	@PutMapping(value = "/api/v1/invites")
 	public ResponseEntity<String> cancelarConvite(@RequestBody Map<String, String> payload) {
 		String code = payload.get("code");

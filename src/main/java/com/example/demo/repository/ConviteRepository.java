@@ -8,6 +8,6 @@ import com.example.demo.model.Convite;
 
 public interface ConviteRepository extends JpaRepository<Convite, String>{
 	
-	Optional<Convite> findByCodigo(String codigo);
+	Optional<Convite> findByCode(String code);
 	
 }

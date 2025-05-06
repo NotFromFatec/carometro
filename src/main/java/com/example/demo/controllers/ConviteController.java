@@ -54,10 +54,10 @@ public class ConviteController {
 	    Administrador administrador = adminOpc.get();
 	    String code = UUID.randomUUID().toString();
 	    Convite convite = new Convite();
-	    convite.setCodigo(code);
-	    convite.setUtilizado(false);
-	    convite.setData(LocalDate.now());
-	    convite.setAdministrador(administrador);
+	    convite.setCode(code);
+	    convite.setUsed(false);
+	    convite.setCreatedAt(LocalDate.now());
+	    convite.setCreatedBy(administrador);
 	    conviteRepository.save(convite);
 	    HttpHeaders headers = new HttpHeaders();
 	    headers.set("Content-Type", "application/json");
@@ -65,7 +65,7 @@ public class ConviteController {
 	}
 
 	// 13. Listar Códigos de Convite GET
-	@GetMapping
+	@GetMapping(value = "/api/v1/invites")
 	public ResponseEntity<List<Convite>> getConvites() {
 	    HttpHeaders headers = new HttpHeaders();
 	    headers.setContentType(MediaType.APPLICATION_JSON);
@@ -74,15 +74,15 @@ public class ConviteController {
 	}
 
 	// 14. Cancelar Código de Convite PUT?o q é put?
-	@PutMapping
+	@PutMapping(value = "/api/v1/invites")
 	public ResponseEntity<String> cancelarConvite(@RequestBody Map<String, String> payload) {
-		String codigo = payload.get("code");
+		String code = payload.get("code");
 
-		if (codigo == null || codigo.isBlank()) {
+		if (code == null || code.isBlank()) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Invalid request\"}");
 		}
 
-		boolean cancelado = conviteService.CancelarConvite(codigo);
+		boolean cancelado = conviteService.CancelarConvite(code);
 
 		if (cancelado) {
 			return ResponseEntity.status(HttpStatus.OK).build();

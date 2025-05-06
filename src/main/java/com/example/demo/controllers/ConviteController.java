@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,7 +22,6 @@ import com.example.demo.repository.ConviteRepository;
 import com.example.demo.service.ConviteService;
 
 @RestController
-@RequestMapping("/api/v1/invites")
 public class ConviteController {
 	
 	@Autowired
@@ -36,38 +34,38 @@ public class ConviteController {
 	private AdministradorRepository administradorRepository;
 
 	// 12. Criar Código de Convite POST
-	@PostMapping
-	public ResponseEntity<String> criarCodigoConvite(@RequestBody Map<String, String> mapeamento) {
-		
-		String amdin_id = mapeamento.get("adminId");
-		if (amdin_id == null || amdin_id.isBlank()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Invalid request\"}");
-		}
-		
-		Optional<Administrador> amdin_opc = administradorRepository.findById(Integer.parseInt(amdin_id));
-		if (!amdin_opc.isPresent()) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"Admin not found\"}");
-		}
+	@PostMapping(value = "/api/v1/invites", consumes = {"application/json", "text/plain"})
+	public ResponseEntity<String> criarCodigoConvite(@RequestBody String body) {
+	    Map<String, String> mapeamento;
+	    try {
+	        mapeamento = new com.google.gson.Gson().fromJson(body, Map.class);
+	    } catch (Exception e) {
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Invalid request\"}");
+	    }
+	  String adminId = mapeamento.get("adminId");
+	    if (adminId == null || adminId.isBlank()) {
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Invalid request\"}");
+	    }
 
-		Administrador administrador = amdin_opc.get();
-
-
-		String codigoConvite = UUID.randomUUID().toString();
-
-		Convite convite = new Convite();
-		convite.setCodigo(codigoConvite);
-		convite.setUtilizado(false);
-		convite.setData(LocalDate.now());
-		convite.setAdministrador(administrador);
-		conviteRepository.save(convite);
-
-		HttpHeaders headers = new HttpHeaders();
-		headers.set("Content-Type", "application/json");
-		return new ResponseEntity<>(String.format("{\"code\": \"%s\"}", codigoConvite), headers, HttpStatus.CREATED);
+	    Optional<Administrador> adminOpc = administradorRepository.findById(Integer.parseInt(adminId));
+	    if (!adminOpc.isPresent()) {
+	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"Admin not found\"}");
+	    }
+	    Administrador administrador = adminOpc.get();
+	    String code = UUID.randomUUID().toString();
+	    Convite convite = new Convite();
+	    convite.setCode(code);
+	    convite.setUsed(false);
+	    convite.setCreatedAt(LocalDate.now());
+	    convite.setCreatedBy(administrador);
+	    conviteRepository.save(convite);
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.set("Content-Type", "application/json");
+	    return new ResponseEntity<>(String.format("{\"code\": \"%s\"}", code), headers, HttpStatus.CREATED);
 	}
 
 	// 13. Listar Códigos de Convite GET
-	@GetMapping
+	@GetMapping(value = "/api/v1/invites")
 	public ResponseEntity<List<Convite>> getConvites() {
 	    HttpHeaders headers = new HttpHeaders();
 	    headers.setContentType(MediaType.APPLICATION_JSON);
@@ -76,15 +74,15 @@ public class ConviteController {
 	}
 
 	// 14. Cancelar Código de Convite PUT?o q é put?
-	@PutMapping
+	@PutMapping(value = "/api/v1/invites")
 	public ResponseEntity<String> cancelarConvite(@RequestBody Map<String, String> payload) {
-		String codigo = payload.get("code");
+		String code = payload.get("code");
 
-		if (codigo == null || codigo.isBlank()) {
+		if (code == null || code.isBlank()) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Invalid request\"}");
 		}
 
-		boolean cancelado = conviteService.CancelarConvite(codigo);
+		boolean cancelado = conviteService.CancelarConvite(code);
 
 		if (cancelado) {
 			return ResponseEntity.status(HttpStatus.OK).build();

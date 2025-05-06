@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.demo.model.Convite;
 
 
-public interface ConviteRepository extends JpaRepository<Convite, Integer>{
+public interface ConviteRepository extends JpaRepository<Convite, String>{
 	
-	Optional<Convite> findByCodigo(String codigo);
+	Optional<Convite> findByCode(String code);
 	
 }

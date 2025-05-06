@@ -19,10 +19,10 @@ public class ConviteService {
 	}
 	
 	public boolean CancelarConvite(String codigo) {
-		Optional<Convite> convite = repository.findByCode(codigo);
+		Optional<Convite> convite = repository.findByCodigo(codigo);
 		if(convite.isPresent()){
 			Convite conviteUsado = convite.get();
-			conviteUsado.setUsed(true);
+			conviteUsado.setUtilizado(true);
 			repository.save(conviteUsado);
 			return true;
 		}else {

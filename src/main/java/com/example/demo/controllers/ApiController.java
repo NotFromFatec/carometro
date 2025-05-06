@@ -20,14 +20,5 @@ class Fabio {
 
 @RestController
 public class ApiController {
-    @GetMapping("/api/v1/egressos")
-	public ResponseEntity<String> index(@RequestHeader Map<String, String> headers) {
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.set("Content-Type", "application/json");
-
-        Gson gson = new Gson();  
-        String userJson = gson.toJson(new Fabio());  
-
-        return new ResponseEntity<String>(userJson, responseHeaders, HttpStatus.CREATED);
-	}
+    
 }

@@ -23,17 +23,21 @@ import lombok.Setter;
 public class Convite {
     
     @Id
-    @Column(name = "code", nullable = false)
-    private String code;
+    @Column(name = "codigo", nullable = false)
+    private String codigo;
     
-    @Column(name = "used", nullable = false)
-    private boolean used;
+    @Column(name = "utilizado", nullable = false)
+    private boolean utilizado;
     
-    @Column(name = "created_at")
-    private LocalDate createdAt;
+    @Column(name = "data", nullable = false)
+    private LocalDate data;
     
     @ManyToOne(targetEntity = Administrador.class, fetch = FetchType.EAGER)
-    @JoinColumn(name = "created_by", nullable = false)
-    private Administrador createdBy;
+    @JoinColumn(name = "id_administrador", nullable = false)
+    private Administrador administrador;
 
+    public String getDataFormatada() {
+        DateTimeFormatter data_formatada = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        return data.format(data_formatada);
+    }
 }

@@ -5,12 +5,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +30,7 @@ public class AdministradorController {
 	private AdministradorRepository administradorRepository;
 
 	// 8. Criar Administrador POST
-	@PostMapping(value = "/api/v1/admins", consumes = { "application/json", "text/plain" })
+	@PostMapping(value = "/api/v1/admins", consumes = {"application/json", "text/plain"})
 	public ResponseEntity<Object> criarAdministrador(@RequestBody String body) {
 		Administrador novoAdmin;
 		System.out.println(body);
@@ -52,7 +52,7 @@ public class AdministradorController {
 	}
 
 	// 9. Login de Administrador POST
-	@PostMapping(value = "/api/v1/login/admin", consumes = { "application/json", "text/plain" })
+	@PostMapping(value = "/api/v1/login/admin", consumes = {"application/json", "text/plain"})
 	public ResponseEntity<Object> loginAdministrador(@RequestBody String body) {
 		Map<String, String> logarComoAdm;
 		try {
@@ -64,6 +64,7 @@ public class AdministradorController {
 		String password = logarComoAdm.get("password");
 
 		Optional<Administrador> adminOptional = administradorRepository.findByUsername(username);
+
 		if (adminOptional.isPresent()) {
 			Administrador admin = adminOptional.get();
 
@@ -80,9 +81,11 @@ public class AdministradorController {
 	}
 
 	// 10. Obter Administrador por ID GET
-	@GetMapping("/api/v1/admins/{id}")
-	public ResponseEntity<String> getAdministradorById(@PathVariable int id) {
+	@GetMapping("/api/v1/admins/id")
+	public ResponseEntity<String> getAdministradorById(@RequestParam int id) {
+
 		Optional<Administrador> encontroAdmById = administradorRepository.findById(id);
+
 		if (encontroAdmById.isPresent()) {
 			Administrador admin = encontroAdmById.get();
 			Gson gson = new Gson();
@@ -90,8 +93,9 @@ public class AdministradorController {
 			HttpHeaders headers = new HttpHeaders();
 			headers.set("Content-Type", "application/json");
 			return new ResponseEntity<>(json, headers, HttpStatus.OK);
+
 		} else {
-			String errorJson = "{ \"message\": \"Admin not found\" }";
+			String errorJson = "{ \"message\": \"Admin nao encontrado\" }";
 			HttpHeaders headers = new HttpHeaders();
 			headers.set("Content-Type", "application/json");
 			return new ResponseEntity<>(errorJson, headers, HttpStatus.NOT_FOUND);
@@ -99,9 +103,11 @@ public class AdministradorController {
 	}
 
 	// 11. Obter Administrador por Nome de Usuário GET
-	@GetMapping("/api/v1/admins")
+	@GetMapping("/api/v1/admins/nome")
 	public ResponseEntity<String> getAdministradorByUsername(@RequestParam String username) {
+
 		Optional<Administrador> encontroAdmByUsername = administradorRepository.findByUsername(username);
+
 		if (encontroAdmByUsername.isPresent()) {
 			Administrador admin = encontroAdmByUsername.get();
 			Gson gson = new Gson();
@@ -109,8 +115,9 @@ public class AdministradorController {
 			HttpHeaders headers = new HttpHeaders();
 			headers.set("Content-Type", "application/json");
 			return new ResponseEntity<>(json, headers, HttpStatus.OK);
+
 		} else {
-			String errorJson = "{ \"message\": \"Admin not found\" }";
+			String errorJson = "{ \"message\": \"Admin nao encontrado\" }";
 			HttpHeaders headers = new HttpHeaders();
 			headers.set("Content-Type", "application/json");
 			return new ResponseEntity<>(errorJson, headers, HttpStatus.NOT_FOUND);

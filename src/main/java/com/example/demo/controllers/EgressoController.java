@@ -87,7 +87,7 @@ public class EgressoController {
     }
 
     // 3. Listar Egressos GET
-    @GetMapping("/api/v1/egressos")
+    /*@GetMapping("/api/v1/egressos")
     public ResponseEntity<Object> listarEgressos() {
         List<Egresso> egressos = egressoService.listar();
 
@@ -98,7 +98,7 @@ public class EgressoController {
             error.put("message", "Nenhum egresso encontrado");
             return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
         }
-    }
+    }*/
 
     // 4. Obter Egresso por ID GET
     @GetMapping("/api/v1/egressos/{id}")
@@ -127,25 +127,38 @@ public class EgressoController {
     }
 
     // 5. Obter Egresso por Nome de Usuário GET
+    // 3. Listar todos ou buscar por username GET
     @GetMapping("/api/v1/egressos")
-    public ResponseEntity<String> getEgressoByUsername(@RequestParam String username) {
+    public ResponseEntity<Object> listarOuBuscarEgressos(@RequestParam(required = false) String username) {
+        // Se o username foi passado, busca específico
+        if (username != null && !username.isBlank()) {
+            Optional<Egresso> encontroEgressoByUsername = Optional
+                    .ofNullable(egressoService.findEgressoByUsername(username));
 
-        Optional<Egresso> encontroEgressoByUsername = Optional
-                .ofNullable(egressoService.findEgressoByUsername(username));
+            if (encontroEgressoByUsername.isPresent()) {
+                Egresso egresso = encontroEgressoByUsername.get();
+                Gson gson = new Gson();
+                String json = gson.toJson(egresso);
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("Content-Type", "application/json");
+                return new ResponseEntity<>(json, headers, HttpStatus.OK);
 
-        if (encontroEgressoByUsername.isPresent()) {
-            Egresso egresso = encontroEgressoByUsername.get();
-            Gson gson = new Gson();
-            String json = gson.toJson(egresso);
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Content-Type", "application/json");
-            return new ResponseEntity<>(json, headers, HttpStatus.OK);
+            } else {
+                String errorJson = "{ \"message\": \"Egresso não encontrado\" }";
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("Content-Type", "application/json");
+                return new ResponseEntity<>(errorJson, headers, HttpStatus.NOT_FOUND);
+            }
+        }
 
+        // Senão, lista todos
+        List<Egresso> egressos = egressoService.listar();
+        if (!egressos.isEmpty()) {
+            return ResponseEntity.ok(egressos);
         } else {
-            String errorJson = "{ \"message\": \"Egresso não encontrado\" }";
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Content-Type", "application/json");
-            return new ResponseEntity<>(errorJson, headers, HttpStatus.NOT_FOUND);
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Nenhum egresso encontrado");
+            return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
         }
     }
 

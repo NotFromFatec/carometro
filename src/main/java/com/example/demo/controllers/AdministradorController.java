@@ -68,7 +68,11 @@ public class AdministradorController {
 			Administrador admin = adminOptional.get();
 
 			if (admin.getPasswordHash().equals(hashPassword(password))) {
-				return ResponseEntity.ok(Map.of("message", "Login realizado com sucesso ", "adminId", admin.getId()));
+				Gson gson = new Gson();
+				String json = gson.toJson(admin);
+				HttpHeaders headers = new HttpHeaders();
+				return new ResponseEntity<>(json, headers, HttpStatus.OK);
+				// return ResponseEntity.ok(Map.of("message", "Login realizado com sucesso ", "adminId", admin.getId()));
 			} else {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Senha incorreta"));
 			}

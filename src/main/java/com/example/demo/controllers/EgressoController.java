@@ -1,6 +1,8 @@
 package com.example.demo.controllers;
 
+import com.example.demo.model.Convite;
 import com.example.demo.model.Egresso;
+import com.example.demo.repository.ConviteRepository;
 import com.example.demo.service.EgressoService;
 import com.google.gson.Gson;
 
@@ -19,9 +21,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +38,9 @@ public class EgressoController {
 
     @Autowired
     private EgressoService egressoService;
+
+    @Autowired
+    private ConviteRepository conviteRepository;
 
     // 1. Cadastrar o Egresso POST
     @PostMapping(value = "/api/v1/egressos", consumes = { "application/json", "text/plain" })
@@ -45,12 +54,33 @@ public class EgressoController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "JSON inválido"));
         }
+
+        // Validate invite code
+        String inviteCode = novoEgresso.getInviteCode();
+        if (inviteCode == null || inviteCode.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Código de convite é obrigatório"));
+        }
+
+        Optional<Convite> convite = conviteRepository.findByCode(inviteCode);
+        if (convite.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Código de convite inválido"));
+        }
+
+        if (convite.get().isUsed()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Código de convite já utilizado"));
+        }
+
         Optional<Egresso> existente = Optional
                 .ofNullable(egressoService.findEgressoByUsername(novoEgresso.getUsername()));
 
         if (existente.isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Username já em uso"));
         }
+
+        // Mark invite as used
+        Convite conviteToUpdate = convite.get();
+        conviteToUpdate.setUsed(true);
+        conviteRepository.save(conviteToUpdate);
 
         novoEgresso.setPasswordHash(hashPassword(novoEgresso.getPasswordHash()));
         Egresso salvo = egressoService.save(novoEgresso);
@@ -72,10 +102,12 @@ public class EgressoController {
         Optional<Egresso> egressOptional = Optional.ofNullable(egressoService.findEgressoByUsername(username));
 
         if (egressOptional.isPresent()) {
-            Egresso egresso = egressOptional.get();
+        Egresso egresso = egressOptional.get();
 
             if (egresso.getPasswordHash().equals(hashPassword(password))) {
-                return ResponseEntity.ok(Map.of("message", "Login realizado com sucesso ", "adminId", egresso.getId()));
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("Content-Type", "application/json");
+                return new ResponseEntity<>(new Gson().toJson(egresso), headers, HttpStatus.OK);
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid credentials"));
             }
@@ -86,19 +118,33 @@ public class EgressoController {
         }
     }
 
-    // 3. Listar Egressos GET
-    /*@GetMapping("/api/v1/egressos")
-    public ResponseEntity<Object> listarEgressos() {
-        List<Egresso> egressos = egressoService.listar();
-
-        if (!egressos.isEmpty()) {
-            return ResponseEntity.ok(egressos);
+    // 3. Listar Egressos GET e 5. Obter Egresso por Nome de Usuário GET
+    @GetMapping("/api/v1/egressos")
+    public ResponseEntity<?> handleEgressos(@RequestParam(required = false) String username) {
+        if (username != null && !username.isBlank()) {
+            // Buscar por username
+            Optional<Egresso> encontroEgressoByUsername = Optional
+                    .ofNullable(egressoService.findEgressoByUsername(username));
+            if (encontroEgressoByUsername.isPresent()) {
+                Egresso egresso = encontroEgressoByUsername.get();
+                Gson gson = new Gson();
+                String json = gson.toJson(egresso);
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("Content-Type", "application/json");
+                return new ResponseEntity<>(json, headers, HttpStatus.OK);
+            } else {
+                String errorJson = "{ \"message\": \"Egresso não encontrado\" }";
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("Content-Type", "application/json");
+                return new ResponseEntity<>(errorJson, headers, HttpStatus.NOT_FOUND);
+            }
         } else {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", "Nenhum egresso encontrado");
-            return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+            // Listar todos
+            List<Egresso> egressos = egressoService.listar();
+            Gson gson = new Gson();
+            return ResponseEntity.ok(gson.toJson(egressos));
         }
-    }*/
+    }
 
     // 4. Obter Egresso por ID GET
     @GetMapping("/api/v1/egressos/{id}")
@@ -126,46 +172,6 @@ public class EgressoController {
                 .body(json);
     }
 
-    // 5. Obter Egresso por Nome de Usuário GET
-    // 3. Listar todos ou buscar por username GET
-    @GetMapping("/api/v1/egressos")
-    public ResponseEntity<Object> listarOuBuscarEgressos(@RequestParam(required = false) String username) {
-        // Se o username foi passado, busca específico
-        if (username != null && !username.isBlank()) {
-            Optional<Egresso> encontroEgressoByUsername = Optional
-                    .ofNullable(egressoService.findEgressoByUsername(username));
-
-            if (encontroEgressoByUsername.isPresent()) {
-                Egresso egresso = encontroEgressoByUsername.get();
-                Gson gson = new Gson();
-                String json = gson.toJson(egresso);
-                HttpHeaders headers = new HttpHeaders();
-                headers.set("Content-Type", "application/json");
-                return new ResponseEntity<>(json, headers, HttpStatus.OK);
-
-            } else {
-                String errorJson = "{ \"message\": \"Egresso não encontrado\" }";
-                HttpHeaders headers = new HttpHeaders();
-                headers.set("Content-Type", "application/json");
-                return new ResponseEntity<>(errorJson, headers, HttpStatus.NOT_FOUND);
-            }
-        }
-
-        // Senão, lista todos
-        List<Egresso> egressos = egressoService.listar();
-        if (!egressos.isEmpty()) {
-            Gson gson = new Gson();
-                String json = gson.toJson(egressos);
-                HttpHeaders headers = new HttpHeaders();
-                headers.set("Content-Type", "application/json");
-                return new ResponseEntity<>(json, headers, HttpStatus.OK);
-        } else {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", "Nenhum egresso encontrado");
-            return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-        }
-    }
-
     // 6. Atualizar Egresso
     @PutMapping(value = "/api/v1/egressos/{id}", consumes = { "application/json", "text/plain" })
     public ResponseEntity<String> atualizarEgresso(@PathVariable int id, @RequestBody String body) {
@@ -188,10 +194,24 @@ public class EgressoController {
         }
         if (atualizacoes.containsKey("name"))
             egresso.setName((String) atualizacoes.get("name"));
-        if (atualizacoes.containsKey("profileImage"))
-            egresso.setProfileImage((String) atualizacoes.get("profileImage"));
-        if (atualizacoes.containsKey("faceImage"))
-            egresso.setFaceImage((String) atualizacoes.get("faceImage"));
+        if (atualizacoes.containsKey("profileImage")) {
+            String profileImage = (String) atualizacoes.get("profileImage");
+            if (isBase64Image(profileImage)) {
+                String path = saveBase64Image(profileImage, "profile", egresso.getId());
+                egresso.setProfileImage(path);
+            } else {
+                egresso.setProfileImage(profileImage);
+            }
+        }
+        if (atualizacoes.containsKey("faceImage")) {
+            String faceImage = (String) atualizacoes.get("faceImage");
+            if (isBase64Image(faceImage)) {
+                String path = saveBase64Image(faceImage, "face", egresso.getId());
+                egresso.setFaceImage(path);
+            } else {
+                egresso.setFaceImage(faceImage);
+            }
+        }
         if (atualizacoes.containsKey("facePoints"))
             egresso.setFacePoints((String) atualizacoes.get("facePoints"));
         if (atualizacoes.containsKey("course"))
@@ -215,7 +235,9 @@ public class EgressoController {
 
         if (atualizacoes.containsKey("passwordHash")) {
             String novaSenha = (String) atualizacoes.get("passwordHash");
-            egresso.setPasswordHash(hashPassword(novaSenha));
+            if (novaSenha != null && !novaSenha.equals(egresso.getPasswordHash())) {
+                egresso.setPasswordHash(hashPassword(novaSenha));
+            } // else, keep the current hash unchanged
         }
         Egresso salvo = egressoService.save(egresso);
 
@@ -253,6 +275,36 @@ public class EgressoController {
             return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Erro ao hashear a senha", e);
+        }
+    }
+
+    private boolean isBase64Image(String str) {
+        if (str == null) return false;
+        return str.startsWith("data:image/");
+    }
+
+    private String saveBase64Image(String base64, String type, int egressoId) {
+        try {
+            String[] parts = base64.split(",", 2);
+            String meta = parts[0];
+            String ext = ".png";
+            if (meta.contains("image/jpeg")) ext = ".jpg";
+            else if (meta.contains("image/webp")) ext = ".webp";
+            else if (meta.contains("image/gif")) ext = ".gif";
+            String data = parts[1];
+            byte[] imageBytes = Base64.getDecoder().decode(data);
+            String folderPath = "src/main/resources/static/egresso-images/";
+            File folder = new File(folderPath);
+            if (!folder.exists()) folder.mkdirs();
+            String filename = type + "_egresso_" + egressoId + "_" + System.currentTimeMillis() + ext;
+            File file = new File(folder, filename);
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(imageBytes);
+            }
+            // Return the static path for frontend usage
+            return "/egresso-images/" + filename;
+        } catch (IOException | ArrayIndexOutOfBoundsException e) {
+            return null;
         }
     }
 }

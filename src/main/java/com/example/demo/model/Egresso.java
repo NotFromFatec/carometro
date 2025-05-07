@@ -31,10 +31,10 @@ public class Egresso {
     @Column(name = "nome", nullable = false)
     private String name;
 
-    @Column(name = "imagem_perfil")
+    @Column(name = "imagem_perfil", length = 4096)
     private String profileImage;
 
-    @Column(name = "imagem_face")
+    @Column(name = "imagem_face", length = 4096)
     private String faceImage;
 
     @Column(name = "pontos_face")

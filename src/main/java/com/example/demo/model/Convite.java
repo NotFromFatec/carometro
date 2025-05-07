@@ -1,13 +1,9 @@
 package com.example.demo.model;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -32,8 +28,7 @@ public class Convite {
     @Column(name = "created_at")
     private LocalDate createdAt;
     
-    @ManyToOne(targetEntity = Administrador.class, fetch = FetchType.EAGER)
-    @JoinColumn(name = "created_by", nullable = false)
-    private Administrador createdBy;
+    @Column(name = "created_by", nullable = false)
+    private Integer createdBy; // store only the admin id
 
 }

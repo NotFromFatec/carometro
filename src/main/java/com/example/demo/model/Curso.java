@@ -29,4 +29,7 @@ public class Curso {
 	@Column(name = "nome", nullable = false)
 	private String name;
 	
+	public Curso(String name) {
+		this.name = name;
+	}
 }

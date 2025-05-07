@@ -15,14 +15,12 @@ public class CursoService {
 	@Autowired
 	private CursoRepository repository;
 
-	public void save(List<Curso> c) {
-		
+	public void save(List<String> names) {
 		repository.deleteAll();
-        List<Curso> cursos = c.stream()
+        List<Curso> cursos = names.stream()
                 .map(Curso::new)
                 .collect(Collectors.toList());
         repository.saveAll(cursos);
-    
 	}
 	
 
@@ -31,5 +29,9 @@ public class CursoService {
                /* .stream()
                 .map(Course::getName)
                 .collect(Collectors.toList())*/;
+    }
+	
+	public List<String> listarNomes() {
+        return repository.findAll().stream().map(Curso::getName).collect(Collectors.toList());
     }
 }

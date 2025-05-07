@@ -20,7 +20,7 @@ class Fabio {
 
 @RestController
 public class ApiController {
-    @GetMapping("/api/v1/egressos")
+    @GetMapping("/api/v1/")
 	public ResponseEntity<String> index(@RequestHeader Map<String, String> headers) {
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.set("Content-Type", "application/json");

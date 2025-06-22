@@ -18,7 +18,7 @@ public class DemoApplication {
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
 		return args -> {
-			System.out.println("Começou a tortura");	
+			System.out.println("Programa Rodando");	
 			// System.out.println("Let's inspect the beans provided by Spring Boot:");
 
 			// String[] beanNames = ctx.getBeanDefinitionNames();
